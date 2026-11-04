@@ -1,0 +1,12 @@
+{
+  "$comment": "当日の購読銘柄（最大50）を選ぶルール。スコア = 各指標の順位（0〜1）× 重み の合計。日足が無い銘柄は universe の順で補う。",
+  "maxSymbols": 50,
+  "lookbackDays": 5,
+  "weights": {
+    "turnover": 1.0,
+    "range": 1.0,
+    "gapAbs": 0.5
+  },
+  "excludeCodes": [],
+  "alwaysInclude": []
+}

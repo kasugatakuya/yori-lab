@@ -6,22 +6,46 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "fetch:daily": "tsx --tsconfig tsconfig.scripts.json scripts/fetch-daily.ts",
+    "fetch:fins": "tsx --tsconfig tsconfig.scripts.json scripts/fetch-fins.ts",
+    "db:stats": "tsx --tsconfig tsconfig.scripts.json scripts/db-stats.ts",
+    "seed:mock": "tsx --tsconfig tsconfig.scripts.json scripts/seed-mock.ts",
+    "collector": "tsx --tsconfig tsconfig.scripts.json collector/src/main.ts",
+    "collector:mock": "tsx --tsconfig tsconfig.scripts.json collector/src/main.ts --mock",
+    "select:symbols": "tsx --tsconfig tsconfig.scripts.json scripts/select-symbols.ts",
+    "update:universe": "tsx --tsconfig tsconfig.scripts.json scripts/update-universe.ts",
+    "fetch:yahoo": "tsx --tsconfig tsconfig.scripts.json scripts/fetch-yahoo.ts",
+    "archive": "tsx --tsconfig tsconfig.scripts.json scripts/archive.ts"
   },
   "dependencies": {
+    "@dsnp/parquetjs": "^1.9.4",
+    "@tanstack/react-table": "^8.21.3",
+    "better-sqlite3": "^13.0.3",
+    "lightweight-charts": "^5.2.1",
     "next": "16.4.3",
+    "next-themes": "^0.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   },
   "packageManager": "pnpm@12.16.1"
 }
