@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { openSqliteRepositories } from "@/lib/db";
 import { JQuantsClient } from "./client";
 import { RateLimiter } from "./rate-limiter";
-import { JOB_DAILY, JOB_FINS, META_DAILY_LAST_DATE, resolveIncrementalFrom, runDailyFetch, runFinsFetch } from "./jobs";
+import { JOB_DAILY, JOB_FINS, META_DAILY_LAST_DATE, ensureCalendar, resolveIncrementalFrom, runDailyFetch, runFinsFetch } from "./jobs";
 
 function fastLimiter() {
   let t = 0;
@@ -40,6 +40,38 @@ const CAL = [
 function barRow(code: string, date: string, close: number) {
   return { Date: date, Code: code, O: close, H: close, L: close, C: close, UL: "0", LL: "0", Vo: 1, Va: 1, AdjFactor: 1, AdjO: close, AdjH: close, AdjL: close, AdjC: close, AdjVo: 1 };
 }
+
+describe("ensureCalendar", () => {
+  it("既存カレンダーが古い開始日を持っていても、要求範囲だけを取得する（Free プランの窓が日ごとにずれるため）", async () => {
+    const repos = openSqliteRepositories(":memory:");
+    // 前回取得時の窓: 2024-08-06..2026-08-06
+    repos.calendar.upsertMany([
+      { date: "2024-08-06", holDiv: "1" },
+      { date: "2026-08-06", holDiv: "1" },
+    ]);
+    const { client, calls } = clientWith((u) => {
+      if (u.pathname !== "/v2/markets/calendar") return { status: 404, body: {} };
+      // 購読範囲外を要求したら J-Quants と同じく 400
+      if (u.searchParams.get("from")! < "20240812") return { status: 400, body: { message: "Your subscription covers the following dates: 2024-08-12 ~ 2026-08-12." } };
+      return { status: 200, body: { data: [{ Date: "2026-08-12", HolDiv: "1" }] } };
+    });
+    // 今日の窓: 2024-08-12..2026-08-12
+    const n = await ensureCalendar(client, repos, { from: "2024-08-12", to: "2026-08-12" });
+    expect(n).toBe(1);
+    expect(calls).toEqual(["/v2/markets/calendar?from=20240812&to=20260812"]);
+  });
+
+  it("既存カレンダーが範囲を覆っていればリクエストしない", async () => {
+    const repos = openSqliteRepositories(":memory:");
+    repos.calendar.upsertMany([
+      { date: "2026-01-01", holDiv: "0" },
+      { date: "2026-01-31", holDiv: "1" },
+    ]);
+    const { client, calls } = clientWith(() => ({ status: 500, body: {} }));
+    expect(await ensureCalendar(client, repos, { from: "2026-01-05", to: "2026-01-20" })).toBe(0);
+    expect(calls).toEqual([]);
+  });
+});
 
 describe("runDailyFetch", () => {
   it("カレンダー取得→営業日ごとに一括取得→universe だけ保存→進捗記録", async () => {

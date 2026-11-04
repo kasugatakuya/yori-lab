@@ -56,9 +56,10 @@ export async function ensureCalendar(
   const cov = repos.calendar.coverage();
   const covered = cov.minDate !== null && cov.maxDate !== null && cov.minDate <= range.from && cov.maxDate >= range.to;
   if (covered) return 0;
-  // 既存範囲と合わせて広めに取る（取得は1回で済む）
-  const from = cov.minDate && cov.minDate < range.from ? cov.minDate : range.from;
-  const to = cov.maxDate && cov.maxDate > range.to ? cov.maxDate : range.to;
+  // 要求された範囲だけを取る（1リクエスト）。既存カレンダーの最古日まで広げると、Free プランの
+  // 取得可能期間（12週間遅延・2年分）が日ごとに後ろへずれるため、前回取得時の開始日が
+  // 購読範囲外になり 400 "Your subscription covers ..." で失敗する。
+  const { from, to } = range;
   log(`calendar: fetching ${from}..${to}`);
   const raw = await client.getCalendar({ from, to });
   const days = raw.map(convertCalendarDay);
